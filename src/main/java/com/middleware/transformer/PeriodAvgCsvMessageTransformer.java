@@ -5,6 +5,8 @@ package com.middleware.transformer;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mule.api.MuleMessage;
@@ -29,8 +31,24 @@ public class PeriodAvgCsvMessageTransformer extends AbstractMessageTransformer {
 			String[] splits = csvEntry.split(",");
 //			TODO
 			String date = "2015/09/27";
-			String result = splits[0]+","+ splits[1] + "," + date + "," + date + ",Period Average," + splits[2];
-			return result;
+			
+//			StringBuilder sb = new StringBuilder();
+//			sb.append("source_currency,target_currency,date1,date2,currency_type,rate");
+//			sb.append("\n");
+//			sb.append(splits[0]+","+ splits[1] + "," + date + "," + date + ",Period Average," + splits[2]);
+//			
+//			return sb.toString();
+			
+			Map<String, String> map = new HashMap<>();
+			map.put("source_currency", splits[0]);
+			map.put("target_currency", splits[1]);
+			map.put("date1", date);
+			map.put("date2", date);
+			map.put("currency_type", "Period Average");
+			map.put("rate", splits[2]);
+			
+			return map;
+			
 		} else {
 			return null;
 		}

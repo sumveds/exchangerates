@@ -20,6 +20,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 		host="www.oanda.com" port="80" doc:name="HTTP Request Configuration" />
 	<http:request-config name="HTTP_Request_Configuration1"
 		port="80" doc:name="HTTP Request Configuration" />
+    <data-mapper:config name="Map_To_CSV" transformationGraphPath="map_to_csv.grf" doc:name="Map_To_CSV"/>
 
 	<flow name="exchangeratesFlow">
 		<quartz:inbound-endpoint jobName="eventTimer"
@@ -47,12 +48,12 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.CorporateCsvMessageTransformer"
-						doc:name="Corporate CSV message transformer" />
+						doc:name="Java" />
 				</processor-chain>
 				<processor-chain>
 					<choice doc:name="Choice">
 						<when
-							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) != Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
 							<http:request config-ref="HTTP_Request_Configuration"
 								path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="End_HTTP request">
 								<http:request-builder>
@@ -73,12 +74,12 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.PeriodEndCsvMessageTransformer"
-						doc:name="Period end CSV message transformer" />
+						doc:name="Java" />
 				</processor-chain>
 				<processor-chain>
 					<choice doc:name="Choice">
 						<when
-							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) != Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
 							<http:request config-ref="HTTP_Request_Configuration"
 								path="/rates/api/v1/rates/{in}.csv" method="GET"
 								doc:name="Average_HTTP request">
@@ -101,11 +102,14 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.PeriodAvgCsvMessageTransformer"
-						doc:name="Period average CSV message transformer" />
+						doc:name="Java" />
 				</processor-chain>
 			</scatter-gather>
 		<logger message="#[payload.getClass().getName()]: #[payload]" level="INFO"
 			doc:name="Logger" />
+        <data-mapper:transform config-ref="Map_To_CSV" doc:name="Map To CSV"/>
+        <file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv" outputPattern="sample.csv" 
+        						responseTimeout="10000" mimeType="application/csv" doc:name="File"/>
 
 		<catch-exception-strategy doc:name="Catch Exception Strategy">
 			<logger level="ERROR" message="#[exception.exceptions]" doc:name="Logger"/>
