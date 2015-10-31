@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+<mule xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
 	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz" xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
@@ -12,7 +13,8 @@ http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/q
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd">
 
 	<http:request-config name="HTTP_Request_Configuration"
 		host="www.oanda.com" port="80" doc:name="HTTP Request Configuration" />
@@ -21,82 +23,92 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 
 	<flow name="exchangeratesFlow">
 		<quartz:inbound-endpoint jobName="eventTimer"
-			doc:name="Quartz" cronExpression="0/5 * * * * ?" repeatInterval="0"
-			responseTimeout="10000">
+			doc:name="Quartz" cronExpression="0/5 * * * * ?" repeatInterval="0" responseTimeout="10000">
 			<quartz:event-generator-job>
 				<quartz:payload>tick-tock</quartz:payload>
 			</quartz:event-generator-job>
 		</quartz:inbound-endpoint>
-		<scatter-gather doc:name="Scatter-Gather">
-			<processor-chain>
-				<http:request config-ref="HTTP_Request_Configuration"
-					path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="Corporate_HTTP request">
-					<http:request-builder>
-                        <http:query-param paramName="api_key" value="jI6hhaGKOL7l2jyMl6DhG7po"/>
-                        <http:query-param paramName="quote" value="INR"/>
-                        <http:query-param paramName="date" value="2015-09-30"/>
-                        <http:query-param paramName="fields" value="midpoint"/>
-                        <http:uri-param paramName="in" value="USD"/>
-					</http:request-builder>
-				</http:request>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-                <custom-transformer class="com.middleware.transformer.CorporateCsvMessageTransformer" doc:name="Java"/>
-				<!-- <splitter expression="" doc:name="Splitter"/> -->
-			</processor-chain>
-			<processor-chain>
-				<choice doc:name="Choice">
-					<when
-						expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
-						<http:request config-ref="HTTP_Request_Configuration"
-							path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="End_HTTP request">
-							<http:request-builder>
-                                <http:query-param paramName="api_key" value="jI6hhaGKOL7l2jyMl6DhG7po"/>
-                                <http:query-param paramName="quote" value="INR"/>
-                                <http:query-param paramName="date" value="2015-09-30"/>
-                                <http:query-param paramName="fields" value="averages"/>
-                                <http:uri-param paramName="in" value="USD"/>
-							</http:request-builder>
-						</http:request>
-					</when>
-					<otherwise>
-						<set-payload value="" doc:name="Set Payload"  />
-					</otherwise>
-				</choice>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-                <custom-transformer class="com.middleware.transformer.PeriodEndCsvMessageTransformer" doc:name="Java"/>
-			</processor-chain>
-			<processor-chain>
-				<choice doc:name="Choice">
-					<when
-						expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
-						<http:request config-ref="HTTP_Request_Configuration"
-							path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="Average_HTTP request">
-							<http:request-builder>
-                                <http:query-param paramName="api_key" value="jI6hhaGKOL7l2jyMl6DhG7po"/>
-                                <http:query-param paramName="quote" value="INR"/>
-                                <http:query-param paramName="end" value="2015-09-30"/>
-                                <http:query-param paramName="fields" value="averages"/>
-                                <http:query-param paramName="start" value="2015-09-01"/>
-                                <http:uri-param paramName="in" value="USD"/>
-							</http:request-builder>
-						</http:request>
-					</when>
-					<otherwise>
-						<set-payload value="" doc:name="Set Payload" />
-					</otherwise>
-				</choice>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-                <custom-transformer class="com.middleware.transformer.PeriodAvgCsvMessageTransformer" doc:name="Java"/>
-			</processor-chain>
-		</scatter-gather>
-		<collection-splitter doc:name="Collection Splitter" />
-		<object-to-string-transformer doc:name="Object to String" />
+			<scatter-gather doc:name="Scatter-Gather">
+				<custom-aggregation-strategy class="com.middleware.aggregator.ExchangeRatesAggregator" />
+				<processor-chain>
+					<http:request config-ref="HTTP_Request_Configuration"
+						path="/rates/api/v1/rates/{in}.csv" method="GET"
+						doc:name="Corporate_HTTP request">
+						<http:request-builder>
+							<http:query-param paramName="api_key"
+								value="jI6hhaGKOL7l2jyMl6DhG7po" />
+							<http:query-param paramName="quote" value="INR" />
+							<http:query-param paramName="date" value="2015-09-30" />
+							<http:query-param paramName="fields" value="midpoint" />
+							<http:uri-param paramName="in" value="USD" />
+						</http:request-builder>
+					</http:request>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.CorporateCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+				<processor-chain>
+					<choice doc:name="Choice">
+						<when
+							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) != Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							<http:request config-ref="HTTP_Request_Configuration"
+								path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="End_HTTP request">
+								<http:request-builder>
+									<http:query-param paramName="api_key"
+										value="jI6hhaGKOL7l2jyMl6DhG7po" />
+									<http:query-param paramName="quote" value="INR" />
+									<http:query-param paramName="date" value="2015-09-30" />
+									<http:query-param paramName="fields" value="averages" />
+									<http:uri-param paramName="in" value="USD" />
+								</http:request-builder>
+							</http:request>
+						</when>
+						<otherwise>
+							<set-payload value="" doc:name="Set Payload" />
+						</otherwise>
+					</choice>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.PeriodEndCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+				<processor-chain>
+					<choice doc:name="Choice">
+						<when
+							expression="#[ Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) != Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							<http:request config-ref="HTTP_Request_Configuration"
+								path="/rates/api/v1/rates/{in}.csv" method="GET"
+								doc:name="Average_HTTP request">
+								<http:request-builder>
+									<http:query-param paramName="api_key"
+										value="jI6hhaGKOL7l2jyMl6DhG7po" />
+									<http:query-param paramName="quote" value="INR" />
+									<http:query-param paramName="end" value="2015-09-30" />
+									<http:query-param paramName="fields" value="averages" />
+									<http:query-param paramName="start" value="2015-09-01" />
+									<http:uri-param paramName="in" value="USD" />
+								</http:request-builder>
+							</http:request>
+						</when>
+						<otherwise>
+							<set-payload value="" doc:name="Set Payload" />
+						</otherwise>
+					</choice>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.PeriodAvgCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+			</scatter-gather>
+		<logger message="#[payload.getClass().getName()]: #[payload]" level="INFO"
+			doc:name="Logger" />
 
-		<logger message="Final response: #[payload]" doc:name="Logger"
-			level="INFO" />
-        <file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv" outputPattern="rates.csv" responseTimeout="10000" doc:name="File"/>
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<logger level="ERROR" message="#[exception.exceptions]" doc:name="Logger"/>
+		</catch-exception-strategy>
 	</flow>
 </mule>
