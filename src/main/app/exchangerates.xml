@@ -47,7 +47,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.CorporateCsvMessageTransformer"
-						doc:name="Java" />
+						doc:name="Corporate CSV message transformer" />
 				</processor-chain>
 				<processor-chain>
 					<choice doc:name="Choice">
@@ -73,7 +73,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.PeriodEndCsvMessageTransformer"
-						doc:name="Java" />
+						doc:name="Period end CSV message transformer" />
 				</processor-chain>
 				<processor-chain>
 					<choice doc:name="Choice">
@@ -101,7 +101,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 						doc:name="Byte Array to String" />
 					<custom-transformer
 						class="com.middleware.transformer.PeriodAvgCsvMessageTransformer"
-						doc:name="Java" />
+						doc:name="Period average CSV message transformer" />
 				</processor-chain>
 			</scatter-gather>
 		<logger message="#[payload.getClass().getName()]: #[payload]" level="INFO"
