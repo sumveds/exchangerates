@@ -21,6 +21,8 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 	<http:request-config name="HTTP_Request_Configuration1"
 		port="80" doc:name="HTTP Request Configuration" />
     <data-mapper:config name="Map_To_CSV" transformationGraphPath="map_to_csv.grf" doc:name="Map_To_CSV"/>
+    
+    <file:connector name="output" outputAppend="true" doc:name="File"/>
 
 	<flow name="exchangeratesFlow">
 		<quartz:inbound-endpoint jobName="eventTimer"
@@ -108,7 +110,8 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 		<logger message="#[payload.getClass().getName()]: #[payload]" level="INFO"
 			doc:name="Logger" />
         <data-mapper:transform config-ref="Map_To_CSV" doc:name="Map To CSV"/>
-        <file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv" outputPattern="sample.csv" 
+        <!-- <append-string-transformer message="#[message]" doc:name="Append String"/> -->
+        <file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv" outputPattern="sample.csv" connector-ref="output" 
         						responseTimeout="10000" mimeType="application/csv" doc:name="File"/>
 
 		<catch-exception-strategy doc:name="Catch Exception Strategy">
