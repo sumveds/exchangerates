@@ -1,6 +1,6 @@
 <metadata__cache__entry>
   <version>5.2.0.0</version>
-  <connectorName>Pojo_To_CSV</connectorName>
+  <connectorName>CSV_To_Pojo</connectorName>
   <metadataIo class="tree-map">
     <entry>
       <string>http://www.mulesoft.org/schema/mule/ee/data-mapper/transform</string>
@@ -8,18 +8,15 @@
         <entry>
           <string>__default__</string>
           <org.mule.tooling.metadata.cache.DefaultMetadataCacheEntry>
-            <input class="org.mule.common.metadata.DefaultMetaData">
+            <output class="org.mule.common.metadata.DefaultMetaData">
               <payload class="org.mule.common.metadata.DefaultListMetaDataModel">
                 <dataType>LIST</dataType>
                 <metaDataModelPropertiesManager>
                   <properties/>
                 </metaDataModelPropertiesManager>
-                <model class="org.mule.common.metadata.DefaultDefinedMapMetaDataModel">
-                  <dataType>MAP</dataType>
-                  <metaDataModelPropertiesManager>
-                    <properties/>
-                  </metaDataModelPropertiesManager>
-                  <fields/>
+                <model class="org.mule.tooling.metadata.api.TypeRefMetaDataModel">
+                  <connectorName>CSV_To_Pojo</connectorName>
+                  <typeId>com.middleware.input.Data</typeId>
                 </model>
                 <isArray>false</isArray>
               </payload>
@@ -55,7 +52,7 @@
                   </org.mule.common.metadata.MetaDataProperties>
                 </entry>
               </properties>
-            </input>
+            </output>
           </org.mule.tooling.metadata.cache.DefaultMetadataCacheEntry>
         </entry>
       </map>

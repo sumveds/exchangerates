@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><Graph __version="3.5.0" author="sumvedshami" created="Sun Nov 01 00:56:29 IST 2015" description="CSV To Pojo" guiVersion="3.4.4.P" id="1446367787533" licenseCode="Unlicensed" licenseType="Unknown" modified="Sun Nov 01 00:56:29 IST 2015" modifiedBy="sumvedshami" name="CSV_To_Pojo" preview-file="/Users/sumvedshami/Desktop/csv/input.csv" revision="1.0" showComponentDetails="false">
+<Global>
+<Metadata __referenceCounter="1" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _type="Input" id="a2e13cf1-8caf-47d7-b5e3-cbdf0eea9813">
+<Record fieldDelimiter="," name="input" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field containerType="SINGLE" label="source_currency" name="source_currency" size="10" type="string"/>
+<Field containerType="SINGLE" eofAsDelimiter="true" label="target_currency" name="target_currency" size="10" type="string"/>
+<Field __artificialType="_id" auto_filling="global_row_count" name="__id" type="long"/>
+</Record>
+</Metadata>
+<Metadata __index="0" __referenceCounter="1" __sourcePath="{}/list" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _id="__id" _type="Output" id="5ae3091a-6950-4e6f-a2c4-f2e683620440">
+<Record fieldDelimiter="," name="list" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_id" __systemManaged="true" name="__id" type="string"/>
+<Field __index="0" __sourcePath="{}/list/sourceCurrency" containerType="SINGLE" label="sourceCurrency" name="sourceCurrency" type="string"/>
+<Field __index="1" __sourcePath="{}/list/targetCurrency" containerType="SINGLE" label="targetCurrency" name="targetCurrency" type="string"/>
+</Record>
+</Metadata>
+<Dictionary>
+<Entry id="DictionaryEntry0" input="true" name="inputPayload" output="false" type="object"/>
+<Entry id="DictionaryEntry1" input="false" name="outputPayload" output="true" type="object"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node cacheInMemory="true" enabled="enabled" fileURL="dict:outputPayload" guiName="Pojo WRITER" guiX="900" guiY="20" id="BEAN_WRITER0" type="BEAN_WRITER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<clover:collection clover:name="list" xmlns:clover="http://www.cloveretl.com/ns/xmlmapping">
+  <item clover:inPort="0">
+    <sourceCurrency>$0.sourceCurrency</sourceCurrency>
+    <targetCurrency>$0.targetCurrency</targetCurrency>
+  </item>
+</clover:collection>]]></attr>
+<attr name="_data_format"><![CDATA[JAVA]]></attr>
+<attr name="schema"><![CDATA[<?xml version="1.0" encoding="UTF-8"?><schema-object>
+  <schema-collection>
+    <typed-object-ref type-ref="com.middleware.input.Data"/>
+  </schema-collection>
+  <typed-object type="java.lang.String"/>
+  <typed-object type="com.middleware.input.Data">
+    <typed-object-ref name="sourceCurrency" type-ref="java.lang.String"/>
+    <typed-object-ref name="targetCurrency" type-ref="java.lang.String"/>
+  </typed-object>
+</schema-object>
+]]></attr>
+</Node>
+<Node charset="UTF-8" enabled="enabled" fileURL="dict:inputPayload" guiName="CSV READER" guiX="20" guiY="20" id="DATA_READER0" quoteCharacter="both" quotedStrings="true" skipRows="1" trim="true" type="DATA_READER">
+<attr name="_data_format"><![CDATA[CSV]]></attr>
+<attr name="__dataSourceDefinition"><![CDATA[/Users/sumvedshami/Desktop/csv/input.csv]]></attr>
+</Node>
+<Node enabled="enabled" guiName="Foreach 'input' -&gt; 'list'" guiX="460" guiY="20" id="FOREACH_INPUT_LIST" transformClass="com.mulesoft.datamapper.transform.MelRecordTransform" type="REFORMAT">
+<attr name="melScript"><![CDATA[//MEL
+//START -> DO NOT REMOVE
+output.__id = num2str(input.__id);
+//END -> DO NOT REMOVE
+output.sourceCurrency = input.source_currency;
+output.targetCurrency = input.target_currency;]]></attr>
+</Node>
+<Edge debugMode="true" fromNode="DATA_READER0:0" guiBendpoints="" id="Edge0" inPort="Port 0 (in)" metadata="a2e13cf1-8caf-47d7-b5e3-cbdf0eea9813" outPort="Port 0 (output)" toNode="FOREACH_INPUT_LIST:0"/>
+<Edge debugMode="true" fromNode="FOREACH_INPUT_LIST:0" guiBendpoints="" id="Edge1" inPort="Port 0 (in)" metadata="5ae3091a-6950-4e6f-a2c4-f2e683620440" outPort="Port 0 (out)" toNode="BEAN_WRITER0:0"/>
+</Phase>
+</Graph>
