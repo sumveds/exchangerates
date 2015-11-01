@@ -3,8 +3,6 @@
  */
 package com.middleware.transformer;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +22,9 @@ public class PeriodEndCsvMessageTransformer extends AbstractMessageTransformer {
 	@Override
 	public Object transformMessage(MuleMessage message, String outputEncoding)
 			throws TransformerException {
+		
+		System.out.println("Period end response: " + message.getPayload().toString());
+		
 		if (StringUtils.isNotEmpty(message.getPayload().toString())) {
 			
 			String csvEntry = message.getPayload().toString().split("\\n")[1];
@@ -32,13 +33,6 @@ public class PeriodEndCsvMessageTransformer extends AbstractMessageTransformer {
 //			TODO
 			String date = splits[2].substring(0, 10).replace('-', '/');
 			
-//			StringBuilder sb = new StringBuilder();
-//			sb.append("source_currency,target_currency,date1,date2,currency_type,rate");
-//			sb.append("\n");
-//			sb.append(splits[0]+","+ splits[1] + "," + date + "," + date + ",Period End," + splits[3]);
-//			
-//			return sb.toString();
-			
 			Map<String, String> map = new HashMap<>();
 			map.put("source_currency", splits[0]);
 			map.put("target_currency", splits[1]);
@@ -46,6 +40,8 @@ public class PeriodEndCsvMessageTransformer extends AbstractMessageTransformer {
 			map.put("date2", date);
 			map.put("currency_type", "Period End");
 			map.put("rate", splits[3]);
+			
+			message.setPayload(map);
 			
 			return map;
 			

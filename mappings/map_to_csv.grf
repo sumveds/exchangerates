@@ -52,7 +52,7 @@ output.__id = str2long(input.__id);
 //END -> DO NOT REMOVE
 output.currency_type = input.currency_type;
 output.rate = input.rate;
-output.source = input.currency_type;
+output.source = input.source_currency;
 output.target = input.target_currency;
 output.date_1 = input.date1;
 output.date_2 = input.date2;]]></attr>

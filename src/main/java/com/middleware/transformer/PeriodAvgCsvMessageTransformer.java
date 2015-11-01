@@ -3,8 +3,6 @@
  */
 package com.middleware.transformer;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,20 +22,16 @@ public class PeriodAvgCsvMessageTransformer extends AbstractMessageTransformer {
 	@Override
 	public Object transformMessage(MuleMessage message, String outputEncoding)
 			throws TransformerException {
+		
+		System.out.println("Period avg response: " + message.getPayload().toString());
+		
 		if (StringUtils.isNotEmpty(message.getPayload().toString())) {
 			
 			String csvEntry = message.getPayload().toString().split("\\n")[1];
 			
 			String[] splits = csvEntry.split(",");
 //			TODO
-			String date = "2015/09/27";
-			
-//			StringBuilder sb = new StringBuilder();
-//			sb.append("source_currency,target_currency,date1,date2,currency_type,rate");
-//			sb.append("\n");
-//			sb.append(splits[0]+","+ splits[1] + "," + date + "," + date + ",Period Average," + splits[2]);
-//			
-//			return sb.toString();
+			String date = splits[2].substring(0, 10).replace('-', '/');
 			
 			Map<String, String> map = new HashMap<>();
 			map.put("source_currency", splits[0]);
@@ -45,7 +39,9 @@ public class PeriodAvgCsvMessageTransformer extends AbstractMessageTransformer {
 			map.put("date1", date);
 			map.put("date2", date);
 			map.put("currency_type", "Period Average");
-			map.put("rate", splits[2]);
+			map.put("rate", splits[3]);
+			
+			message.setPayload(map);
 			
 			return map;
 			

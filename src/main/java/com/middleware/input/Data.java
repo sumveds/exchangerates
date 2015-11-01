@@ -1,15 +1,13 @@
 package com.middleware.input;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 public class Data {
 
 	private String sourceCurrency;
 	private String targetCurrency;
-	private String date;
+	private String date = (new SimpleDateFormat("yyyy-MM-dd")).format(new Date());
 
 	public Data() {
 	}
@@ -32,14 +30,12 @@ public class Data {
 
 	public String getDate() {
 		
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-		// Get the date today using Calendar object.
-		Date today = Calendar.getInstance().getTime();        
-		// Using DateFormat format method we can create a string 
-		// representation of a date with the defined format.
-		date = df.format(today);
-		
 		return date;
 	}
-
+	
+	@Override
+	public String toString() {
+		
+		return sourceCurrency + "," + targetCurrency + "," + date;
+	}
 }

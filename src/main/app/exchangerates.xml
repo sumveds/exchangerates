@@ -2,12 +2,11 @@
 
 <mule xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper"
 	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
-	xmlns:mulerequester="http://www.mulesoft.org/schema/mule/mulerequester"  
+	xmlns:mulerequester="http://www.mulesoft.org/schema/mule/mulerequester"
 	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz" xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.7.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/quartz/current/mule-quartz.xsd
@@ -24,124 +23,134 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 		port="80" doc:name="HTTP Request Configuration" />
 	<data-mapper:config name="Map_To_CSV"
 		transformationGraphPath="map_to_csv.grf" doc:name="Map_To_CSV" />
-
-	<file:connector name="input" autoDelete="false"
-		doc:name="File" />
 	<file:connector name="output" outputAppend="true"
 		doc:name="File" />
 	<data-mapper:config name="CSV_To_Pojo"
 		transformationGraphPath="csv_to_pojo.grf" doc:name="CSV_To_Pojo" />
-	<mulerequester:config name="Mule_Requester" doc:name="Mule Requester"/>
-
-	<!-- <flow name="RequestFile" doc:name="RequestFile">
-		<file:inbound-endpoint path="/Users/sumvedshami/Desktop/csv"
-			responseTimeout="10000" mimeType="application/csv" doc:name="File"
-			moveToDirectory="/Users/sumvedshami/Desktop" connector-ref="input">
-			<file:filename-regex-filter pattern="input.csv"
-				caseSensitive="true" />
-		</file:inbound-endpoint>
-		<data-mapper:transform config-ref="CSV_To_Pojo"
-			doc:name="CSV To Pojo" />
-		<logger message="#[payload.getClass().getName()]: #[payload]"
-			level="INFO" doc:name="Logger" />
-	</flow> -->
+	<mulerequester:config name="Mule_Requester"
+		doc:name="Mule Requester" />
 
 	<flow name="exchangeratesFlow">
 
 		<quartz:inbound-endpoint jobName="eventTimer"
-			doc:name="Quartz" cronExpression="0/5 * * * * ?" repeatInterval="0"
+			doc:name="Quartz" cronExpression="0/10 * * * * ?" repeatInterval="0"
 			responseTimeout="10000">
 			<quartz:event-generator-job>
 				<quartz:payload>tick-tock</quartz:payload>
 			</quartz:event-generator-job>
 		</quartz:inbound-endpoint>
+
+		<mulerequester:request config-ref="Mule_Requester"
+			resource="file:///Users/sumvedshami/Desktop/csv/input.csv" timeout="10000"
+			returnClass="java.lang.String" doc:name="Mule Requester" />
 		
-		<mulerequester:request config-ref="Mule_Requester" resource="file://Users/sumvedshami/Desktop/csv/input.csv" 
-								timeout="10000" returnClass="java.lang.String" />
+		<logger message="#[message.payload]" level="INFO" doc:name="Logger" />
 
-		<scatter-gather doc:name="Scatter-Gather">
-			<custom-aggregation-strategy
-				class="com.middleware.aggregator.ExchangeRatesAggregator" />
-			<processor-chain>
-				<http:request config-ref="HTTP_Request_Configuration"
-					path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="Corporate_HTTP request">
-					<http:request-builder>
-						<http:query-param paramName="api_key"
-							value="jI6hhaGKOL7l2jyMl6DhG7po" />
-						<http:query-param paramName="quote" value="INR" />
-						<http:query-param paramName="date" value="2015-09-30" />
-						<http:query-param paramName="fields" value="midpoint" />
-						<http:uri-param paramName="in" value="USD" />
-					</http:request-builder>
-				</http:request>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-				<custom-transformer
-					class="com.middleware.transformer.CorporateCsvMessageTransformer"
-					doc:name="Java" />
-			</processor-chain>
-			<processor-chain>
-				<choice doc:name="Choice">
-					<when
-						expression="#[Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
-						<http:request config-ref="HTTP_Request_Configuration"
-							path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="End_HTTP request">
-							<http:request-builder>
-								<http:query-param paramName="api_key"
-									value="jI6hhaGKOL7l2jyMl6DhG7po" />
-								<http:query-param paramName="quote" value="INR" />
-								<http:query-param paramName="date" value="2015-09-30" />
-								<http:query-param paramName="fields" value="averages" />
-								<http:uri-param paramName="in" value="USD" />
-							</http:request-builder>
-						</http:request>
-					</when>
-					<otherwise>
-						<set-payload value="" doc:name="Set Payload" />
-					</otherwise>
-				</choice>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-				<custom-transformer
-					class="com.middleware.transformer.PeriodEndCsvMessageTransformer"
-					doc:name="Java" />
-			</processor-chain>
-			<processor-chain>
-				<choice doc:name="Choice">
-					<when
-						expression="#[Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
-						<http:request config-ref="HTTP_Request_Configuration"
-							path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="Average_HTTP request">
-							<http:request-builder>
-								<http:query-param paramName="api_key"
-									value="jI6hhaGKOL7l2jyMl6DhG7po" />
-								<http:query-param paramName="quote" value="INR" />
-								<http:query-param paramName="end" value="2015-09-30" />
-								<http:query-param paramName="fields" value="averages" />
-								<http:query-param paramName="start" value="2015-09-01" />
-								<http:uri-param paramName="in" value="USD" />
-							</http:request-builder>
-						</http:request>
-					</when>
-					<otherwise>
-						<set-payload value="" doc:name="Set Payload" />
-					</otherwise>
-				</choice>
-				<byte-array-to-string-transformer
-					doc:name="Byte Array to String" />
-				<custom-transformer
-					class="com.middleware.transformer.PeriodAvgCsvMessageTransformer"
-					doc:name="Java" />
-			</processor-chain>
-		</scatter-gather>
-		<logger message="#[payload.getClass().getName()]: #[payload]"
-			level="INFO" doc:name="Logger" />
-		<data-mapper:transform config-ref="Map_To_CSV"
-			doc:name="Map To CSV" />
-		<file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv"
-			outputPattern="sample.csv" connector-ref="output" responseTimeout="10000"
-			mimeType="application/csv" doc:name="File" />
+		<custom-transformer class="com.middleware.transformer.InputCsvTransformer"
+			doc:name="Java" />
+		
 
+		<foreach doc:name="For Each">
+		
+			<logger level="INFO" doc:name="Logger"
+				message="Data: #[payload.getClass().getName()]: #[payload]" />
+			
+			<scatter-gather doc:name="Scatter-Gather">
+				<custom-aggregation-strategy
+					class="com.middleware.aggregator.ExchangeRatesAggregator" />
+				<processor-chain>
+					<http:request config-ref="HTTP_Request_Configuration"
+						path="/rates/api/v1/rates/{in}.csv" method="GET"
+						doc:name="Corporate_HTTP request">
+						<http:request-builder>
+							<http:query-param paramName="api_key"
+								value="jI6hhaGKOL7l2jyMl6DhG7po" />
+							<http:query-param paramName="quote"
+								value="#[payload.targetCurrency]" />
+							<http:query-param paramName="date" value="#[payload.date]" />
+							<http:query-param paramName="fields" value="midpoint" />
+							<http:uri-param paramName="in"
+								value="#[payload.sourceCurrency]" />
+						</http:request-builder>
+					</http:request>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.CorporateCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+				<processor-chain>
+					<choice doc:name="Choice">
+						<when
+							expression="#[Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							<http:request config-ref="HTTP_Request_Configuration"
+								path="/rates/api/v1/rates/{in}.csv" method="GET" doc:name="End_HTTP request">
+								<http:request-builder>
+									<http:query-param paramName="api_key"
+										value="jI6hhaGKOL7l2jyMl6DhG7po" />
+									<http:query-param paramName="quote"
+										value="#[payload.targetCurrency]" />
+									<http:query-param paramName="date" value="#[payload.date]" />
+									<http:query-param paramName="fields" value="averages" />
+									<http:uri-param paramName="in"
+										value="#[payload.sourceCurrency]" />
+								</http:request-builder>
+							</http:request>
+						</when>
+						<otherwise>
+							<set-payload value="" doc:name="Set Payload" />
+						</otherwise>
+					</choice>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.PeriodEndCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+				<processor-chain>
+					<choice doc:name="Choice">
+						<when
+							expression="#[Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)]">
+							<http:request config-ref="HTTP_Request_Configuration"
+								path="/rates/api/v1/rates/{in}.csv" method="GET"
+								doc:name="Average_HTTP request">
+								<http:request-builder>
+									<http:query-param paramName="api_key"
+										value="jI6hhaGKOL7l2jyMl6DhG7po" />
+									<http:query-param paramName="quote"
+										value="#[payload.targetCurrency]" />
+									<http:query-param paramName="end" value="#[payload.date]" />
+									<http:query-param paramName="fields" value="averages" />
+									<http:query-param paramName="start" value="#[payload.date]" />
+									<http:uri-param paramName="in"
+										value="#[payload.sourceCurrency]" />
+								</http:request-builder>
+							</http:request>
+						</when>
+						<otherwise>
+							<set-payload value="" doc:name="Set Payload" />
+						</otherwise>
+					</choice>
+					<byte-array-to-string-transformer
+						doc:name="Byte Array to String" />
+					<custom-transformer
+						class="com.middleware.transformer.PeriodAvgCsvMessageTransformer"
+						doc:name="Java" />
+				</processor-chain>
+			</scatter-gather>
+			
+			<logger
+				message="Map data to be parsed to CSV: #[payload.getClass().getName()]: #[payload]"
+				level="INFO" doc:name="Logger" />
+
+			<data-mapper:transform config-ref="Map_To_CSV"
+				doc:name="Map To CSV" />
+			<file:outbound-endpoint path="/Users/sumvedshami/Desktop/csv"
+				outputPattern="sample.csv" connector-ref="output" responseTimeout="10000"
+				mimeType="application/csv" doc:name="File" />
+		
+		</foreach>
+		
 		<catch-exception-strategy doc:name="Catch Exception Strategy">
 			<logger level="ERROR" message="#[exception.exceptions]"
 				doc:name="Logger" />

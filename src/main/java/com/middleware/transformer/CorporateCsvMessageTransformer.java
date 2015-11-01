@@ -22,19 +22,17 @@ public class CorporateCsvMessageTransformer extends AbstractMessageTransformer {
 	@Override
 	public Object transformMessage(MuleMessage message, String outputEncoding)
 			throws TransformerException {
+		
+		System.out.println("Inside corporate rate message converter...");
+		
+		System.out.println("Corporate response: " + message.getPayload().toString());
+		
 		if (StringUtils.isNotEmpty(message.getPayload().toString())) {
 			
 			String csvEntry = message.getPayload().toString().split("\\n")[1];
 			
 			String[] splits = csvEntry.split(",");
-//			TODO
 			String date = splits[2].substring(0, 10).replace('-', '/');
-			
-//			StringBuilder sb = new StringBuilder();
-//			sb.append("source_currency,target_currency,date1,date2,currency_type,rate");
-//			sb.append("\n");
-//			sb.append(splits[0]+","+ splits[1] + "," + date + "," + date + ",Corporate," + splits[3]);
-//			return sb.toString();
 			
 			Map<String, String> map = new HashMap<>();
 			map.put("source_currency", splits[0]);
@@ -43,6 +41,8 @@ public class CorporateCsvMessageTransformer extends AbstractMessageTransformer {
 			map.put("date2", date);
 			map.put("currency_type", "Corporate");
 			map.put("rate", splits[3]);
+			
+			message.setPayload(map);
 			
 			return map;
 
